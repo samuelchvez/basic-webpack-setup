@@ -1,79 +1,108 @@
-// import React from "react";
-// import ReactDOM from "react-dom";
+import expect from 'expect';
+import { createStore } from 'redux';
+import React from 'react';
+import ReactDOM from 'react-dom';
+import Immutable from 'immutable';
 
-// import Layout from "./components/Layout";
+// Javascript the good parts
 
-// const app = document.getElementById('app');
-// ReactDOM.render(<Layout/>, app);
+const Counter = ({ value, incrementAction, decrementAction, removeAction }) => (
+  <div>
+    <h1>{ value }</h1>
+    <button onClick={ incrementAction }>+</button>
+    <button onClick={ decrementAction }>-</button>
+    <button onClick={ removeAction }>x</button>
+  </div>
+);
 
-// import { createStore } from "redux";
+const CounterList = ({ list }) => (
+  <div>
+    {
+      list.map(
+        (value, i) => (
+          <Counter
+            key={ i }
+            value={ value }
+            index={ i }
+            incrementAction={
+              () => store.dispatch({
+                type: 'INCREMENT',
+                payload: { index: i }
+              })
+            }
+            decrementAction={
+              () => store.dispatch({
+                type: 'DECREMENT',
+                payload: { index: i }
+              })
+            }
+            removeAction={
+              () => store.dispatch({
+                type: 'REMOVE_COUNTER',
+                payload: {
+                  index: i
+                }
+              })
+            }
+          />
+        )
+      )
+    }
+    <button onClick={ () => store.dispatch({ type: 'ADD_COUNTER' }) }>Add counter</button>
+  </div>
+);
 
+const validateIndex = (index, list) => 0 <= index && index < list.size;
 
+// Reducer
+const counterList = (state = Immutable.List.of(), action) => {
 
-// const counter = (state = 0, action) => {
-//   switch (action.type) {
-//     case 'INCREMENT':
-//       return state + 1;
-//     case 'DECREMENT':
-//       return state - 1;
-//     default:
-//       return state;
-//   }
-// }
+  if(typeof action.payload !== 'undefined'){
+    var { index } = action.payload;
+  }
 
-// const store = createStore(counter);
+  switch(action.type){
+    case 'ADD_COUNTER':
+      return state.push(0);
 
-// console.log("Samuel");
+    case 'REMOVE_COUNTER':
 
-// console.log(store.getState());
+      if(validateIndex(index, state)){
+        return state.delete(index);
+      }
 
-// store.dispatch({
-//   type: 'INCREMENT'
-// });
+      return state;
 
-// console.log(store.getState());
+    case 'INCREMENT':
 
-// store.dispatch({
-//   type: 'INCREMENT'
-// });
+      if(validateIndex(index, state)){
+        return state.update(index, (v) => v + 1);
+      }
 
-// console.log(store.getState());
+      return state;
 
-// store.dispatch({
-//   type: 'INCREMENT'
-// });
+    case 'DECREMENT':
 
-// console.log(store.getState());
+      if(validateIndex(index, state)){
+        return state.update(index,  (v) => v - 1);
+      }
 
-// store.dispatch({
-//   type: 'INCREMENT'
-// });
+      return state;
 
-// console.log(store.getState());
-
-// store.dispatch({
-//   type: 'DECREMENT'
-// });
-
-// console.log(store.getState());
-
-// store.dispatch({
-//   type: 'DECREMENT'
-// });
-
-// console.log(store.getState());
-
-function* xrange({start = 0, end, step = 1}) {
-  while(start < end){
-    yield start;
-    start += step;
+    default:
+      return state;
   }
 }
 
-let params = [1, 2, 3];
-let other = [4, 5, ...params];
-console.log(other);
+// createStore: reducer --> store
+const store = createStore(counterList);
 
+const render = () => {
+  ReactDOM.render(
+    <CounterList list={ store.getState() } />,
+    document.getElementById('root')
+  )
+}
 
-let numbers = [ ...xrange({end: 100}) ];
-console.log(numbers);
+store.subscribe(render);
+render();
